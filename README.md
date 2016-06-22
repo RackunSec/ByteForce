@@ -37,6 +37,7 @@ _Screenshot: Compiling ByteForce is easy!_
 ## TODO
 * Organize the PCAP file output using the RadioTap headers as delimiters
 * Add Base64 encoding
+* Search documents for hidden executable code
 
 ## References
 * ROT13: https://en.wikipedia.org/wiki/ROT13 
