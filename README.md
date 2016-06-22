@@ -34,5 +34,5 @@ _Screenshot: Compiling ByteForce is easy!_
 
 <img src="https://weaknetlabs.com/images/byte-force-02.png"/>
 ## TODO
-* Organize the PCAP file output
+* Organize the PCAP file output using the RadioTap headers as delimiters
 * Add Base64 encoding
