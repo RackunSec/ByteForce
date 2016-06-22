@@ -20,7 +20,7 @@ This will perform the brute-force XOR attack after performing the ROT13() functi
 ## Screenshots
 _Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
 
-<img src="https://weaknetlabs.com/images/byte-force-06.png"/>
+<img src="https://weaknetlabs.com/images/byte-force-07.png"/>
 
 _Screenshot: ByteForce reading a PNG file_
 
