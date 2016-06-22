@@ -1,2 +1,38 @@
 # ByteForce
 Offline Digital Forensics Tool for Binary Files
+This tool can be used for (offline) digital forensics and malware analysis as it shows all raw bytes of a file and also the ASCII representations. As you can see from the screenshots, I have used it on a few different file types, TXT, PNG, Compiled C code, and even a packet capture file. It has three columns, one to show the byte count on the far left. Then, in the middle the hexadecimal bytes of the file, and on the right the ASCII representations (if there are any) of the hexadecimal bytes.
+
+_Screenshot: ByteForce reading a binary file_
+
+<img src="https://weaknetlabs.com/images/byte-force-01.png"/>
+
+## Features
+ByteForce has some features that were unexpectedly added. After reading a few sites about malware, including the MalwareByte's weblog, here http://blog.malwarebytes.org/intelligence/2013/03/obfuscation-malwares-best-friend I decided to implement a few of the ideas shared in the article into the code.
+### HTTP Strings
+ByteForce will search Binary files for case-insensitive, plain-text HTTP strings.
+### XOR Brute Force attack (Case-Insensitive)
+The XOR brute force attack will try every byte from 0x01 to 0x1f as a XOR key against the byte found in the file. If the result equals the ASCII value of an "H" or "h" I grab the next byte in the file, perform the XOR and look for a "T" ot "t". I continue until I find "[Hh][Tt]{2}[pP]" and if found, I print the bytes until I get a non printable character. The algorithm I wrote will trace steps back into the opened file's bytes accordingly if a non http ASCII value is found.
+### Rotate 13 Check
+This will perform a simple ROT13() function that I made on the byte before checking it's value for the "[Hh][tT]{2}[pP]" ASCII values that I searched for in the XOR segment above.
+### XOR-ROT13 Attack
+This will perform the brute-force XOR attack after performing the ROT13() function I made on the file's byte before checking it for the "[Hh][tT]{2}[pP]" ASCII values.
+## Screenshots
+_Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
+
+<img src="https://weaknetlabs.com/images/byte-force-06.png"/>
+
+_Screenshot: ByteForce reading a PNG file_
+
+<img src="https://weaknetlabs.com/images/byte-force-05.png"/>
+
+_Screenshot: ByteForce reading a 802.11 WiFi network PCAP file_
+
+<img src="https://weaknetlabs.com/images/byte-force-04.png"/>
+## Compiling
+To compile ByteForce, simply type ```make``` at the command line. I used no special resources or libraries but a few of the default header files from GNU C.
+_Screenshot: Compiling ByteForce is easy!_
+
+<img src="https://weaknetlabs.com/images/byte-force-02.png"/>
+## TODO
+* Organize the PCAP file output
+* Add Base64 encoding
