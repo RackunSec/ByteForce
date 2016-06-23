@@ -28,6 +28,7 @@ void goodBye(void);							// Thank you!!
 void colorText(char * color,char * string);				// print fancy colors
 void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey);	// walk through bytes and print them
 void byteDecodeSearch(FILE *fp, char * type);				// ROT13, XOR, XOR-ROT13 byte de-obfuscation
+void dosPeHeader(FILE *fp);			// DOS PE header check
 
 int main(int argc,char ** argv){
 	greetings();
@@ -61,6 +62,7 @@ void processFile(char * file,int mode){ /* process each byte in file */
 	if(fp==NULL){ // what happened?
 		fprintf(stderr,"Could not open file %s.\nPlease check the file.\n",file);
 	}else{ // file opened OK:
+		dosPeHeader(fp); // check for DOS/PE headers
 		stat(file,&fileAttribs);
 		colorText("yellow"," * "); printf("File last modified: \x1b[37m%s\x1b[0m",ctime(&fileAttribs.st_mtime));
 		colorText("yellow"," * "); printf("File last accessed: \x1b[37m%s\x1b[0m",ctime(&fileAttribs.st_atime));
@@ -135,6 +137,91 @@ void processFile(char * file,int mode){ /* process each byte in file */
 		}
 	} // finished processing the file, close it up:
 	if(fp!=NULL) fclose(fp); // ONLY if it's open, or we segfault
+	return;
+}
+
+void dosPeHeader(FILE *fp){ // check the first few bytes for 4D,59,90 and the 60th byte for the PE
+	unsigned char byte = '\0';   // store the byte for fread() temporarily
+	unsigned short dosHeader=0;  // is there a DOS header?
+	unsigned short peHeaderOk=0; // is this a valid PE file?
+	unsigned char peByte = '\0'; // if so, is there a PE pointer?
+	rewind(fp); // rewind just in case and we do again before leaving
+	fread(&byte,sizeof(byte),1,fp);
+	if(byte==77){
+		fread(&byte,sizeof(byte),1,fp);
+		if(byte==90){
+			fread(&byte,sizeof(byte),1,fp);
+			if(byte==144){ // NOP
+				dosHeader=1;
+			}fseek(fp,-1,SEEK_CUR);
+		}fseek(fp,-1,SEEK_CUR);
+	}fseek(fp,-1,SEEK_CUR);
+	if(dosHeader==1){
+		colorText("yellow", " * ");
+		printf("A DOS header was found.\n");
+		fseek(fp,60,SEEK_SET); // 60th byte from beginning is the PE pointer
+		fread(&byte,sizeof(byte),1,fp);
+		colorText("yellow"," * ");
+		printf("The PE pointer byte is pointing to %02x (hex) = %d (dec).\n",byte,byte);
+		fseek(fp,byte,SEEK_SET); // offset from the beginning of the file
+		fread(&byte,sizeof(byte),1,fp); // grab the next byte, is it a "P"?
+		if(byte==80){ // P
+			fread(&byte,sizeof(byte),1,fp);
+			if(byte==69){ // E
+				fread(&byte,sizeof(byte),1,fp);
+				if(byte==0){ // 0x00
+					fread(&byte,sizeof(byte),1,fp);
+					if(byte==0){ // 0x00
+						peHeaderOk=1;
+					}
+				}
+			}
+		}
+		if(peHeaderOk==1){
+			colorText("yellow"," * ");
+			printf("This is a valid PE file.\n");
+			struct coffHeader{
+				unsigned short machine;
+				unsigned short numberOfSections;
+				long timeDateStamp; // I'm not gonna use most of these
+				long pointerToSymbolTable;
+				long numberOfSymbols;
+				short sizeOfOptionalHeader;
+				unsigned short characteristics;
+			};
+			struct coffHeader ch;
+			fread(&ch,sizeof(ch),1,fp);
+			colorText("yellow"," * ");
+			printf("PE compiled for architecture: ");
+			switch(ch.machine){ // get machine type
+				case(34404): 
+					colorText("white","x64\n");
+					break;
+				case(332):
+					colorText("white","Intel 386\n");
+					break;
+				case(3772):
+					colorText("white","EFI\n");
+					break;
+				printf("Unknown type.\n"); // fall through
+			}
+			colorText("yellow"," * ");
+			printf("This is a valid ");
+			switch(ch.characteristics){ // man, what a stupid symbol name, derp
+				case(34):
+					printf("EXE Windows\xc2\xa9 Executable\n");
+					break;
+				case(8226):
+					printf("DLL Dynamically-Linked Library\n");
+					break;
+			}
+
+		}else{
+			colorText("red"," * ");
+			printf("This is NOT a valid PE file.\n");
+		}
+	}
+	rewind(fp);
 	return;
 }
 
@@ -344,8 +431,8 @@ void printDataHeader(void){
 
 void greetings(void){ /* printf version / title: */
 	printf("\n");
-	colorText("yellow"," * ");
-	colorText("orange","BYTEFORCE, version ");
+	colorText("yellow"," \xe2\x98\xa2 ");
+	colorText("orange"," BYTEFORCE, version ");
 	colorText("yellow",BFVERSION);
 	printf("\n\n");
 }
