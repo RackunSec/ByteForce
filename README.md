@@ -4,7 +4,7 @@ This tool can be used for (offline) digital forensics and malware analysis as it
 
 _Screenshot: ByteForce reading a binary file_
 
-<img src="https://weaknetlabs.com/images/byte-force-01.png"/>
+<img src="https://weaknetlabs.com/images/bf-01.png"/>
 
 For the colored output, you will need a 256-color capable terminal emulator. I am using Gnome-Terminal in the screenshots.
 ## Features
@@ -20,23 +20,24 @@ This will perform the brute-force XOR attack after performing the ROT13() functi
 ## Screenshots
 _Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
 
-<img src="https://weaknetlabs.com/images/byte-force-07.png"/>
+<img src="https://weaknetlabs.com/images/bf-02.png"/>
 
 _Screenshot: ByteForce reading a PNG file_
 
-<img src="https://weaknetlabs.com/images/byte-force-05.png"/>
+<img src="https://weaknetlabs.com/images/bf-03.png"/>
 
 _Screenshot: ByteForce reading a 802.11 WiFi network PCAP file_
 
-<img src="https://weaknetlabs.com/images/byte-force-04.png"/>
+<img src="https://weaknetlabs.com/images/bf-04.png"/>
 ## Compiling
 To compile ByteForce, simply type ```make``` at the command line. I used no special resources or libraries but a few of the default header files from GNU C.
 _Screenshot: Compiling ByteForce is easy!_
 
-<img src="https://weaknetlabs.com/images/byte-force-02.png"/>
+<img src="https://weaknetlabs.com/images/bf-05.png"/>
 ## TODO
 * Organize the PCAP file output using the RadioTap headers as delimiters
-* Add Base64 encoding
+* Add Base64 decode attempt attack on possible strings
+* ~~PE/MSDOS validation from Headers~~
 * Search documents for hidden executable code
 
 ## References
