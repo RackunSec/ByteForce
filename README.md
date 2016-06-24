@@ -54,3 +54,5 @@ _Screenshot: Compiling ByteForce is easy!_
 * XOR: https://en.wikipedia.org/wiki/Exclusive_or
 * Gnome-Terminal: https://en.wikipedia.org/wiki/GNOME_Terminal
 * Weakerthan Linux 7 BETA: http://www.weaknetlabs.com/2016/05/weakerthan-linux-7-beta-2-release.html
+* ASCII Table: http://www.asciitable.com/
+* PDF Headers: http://resources.infosecinstitute.com/pdf-file-format-basic-structure/
