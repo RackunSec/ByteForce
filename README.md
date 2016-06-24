@@ -6,7 +6,7 @@ _Screenshot: ByteForce reading a binary file_
 
 <img src="https://weaknetlabs.com/images/bf-01.png"/>
 
-For the colored output, you will need a 256-color capable terminal emulator. I am using Gnome-Terminal in the screenshots.
+For the colored output, you will need a 256-color capable terminal emulator. I am using Gnome-Terminal with Weakerthan Linux 7 BETA in the screenshots.
 ## Features
 ByteForce has some features that were unexpectedly added. After reading a few sites about malware, including the MalwareByte's weblog, here http://blog.malwarebytes.org/intelligence/2013/03/obfuscation-malwares-best-friend I decided to implement a few of the ideas shared in the article into the code.
 ### HTTP Strings
