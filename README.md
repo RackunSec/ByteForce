@@ -22,7 +22,7 @@ ByteForce has the ability to check the document for a valid PDF header and also 
 
 _Screenshot: ByteForce showing a potentially dangerous PDF file_
 
-<img src="https://weaknetlabs.com/images/bf-06.png"/>
+<img src="https://weaknetlabs.com/images/bf-07.png"/>
 ## Screenshots
 _Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
 
