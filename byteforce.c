@@ -1,5 +1,5 @@
 /*
- * ByteForce v0.6.22
+ * ByteForce ver-> yy.mm.dd
  *
  * Douglas Berdeaux
  * WeakNetLabs@gmail.com
@@ -69,7 +69,7 @@ void processFile(char * file,int mode){ /* process each byte in file */
 		colorText("yellow"," * "); printf("File last accessed: \x1b[37m%s\x1b[0m",ctime(&fileAttribs.st_atime));
 		colorText("yellow"," * "); printf("File \x1b[37m%s\x1b[0m opened successfully.\n",file);
 		unsigned int fileLength = fileAttribs.st_size; // get the file length in bytes
-		colorText("yellow"," * "); printf("File length \x1b[37m%d\x1b[0m bytes.\n\n",fileLength);
+		colorText("yellow"," * "); printf("File length \x1b[37m%d\x1b[0m bytes.\n",fileLength);
 		knownFileType = dosPeHeader(fp); // check for DOS/PE headers
 		if(!knownFileType) knownFileType = pdfHeader(fp,fileLength); // check for PDF headers
 		unsigned int i; // token for looping through each byte
@@ -164,9 +164,31 @@ int pdfHeader(FILE *fp,int fileLength){
 	}
 	if(knownFileType){ // search byte by byte for executable code:
 		unsigned int i;
+		unsigned short exeFound = 0;
 		unsigned char byte = '\0'; // place the byte temporarily
 		rewind(fp);
-		// tried using zlib.h deflate/inflate here. no thanks.
+		// tried using zlib.h deflate/inflate here
+		// after looking at code examples, docs, no thanks.
+		for(i=0;i<fileLength;i++){
+			fread(&byte,sizeof(byte),1,fp);
+			if(byte==46){ // .
+				fread(&byte,sizeof(byte),1,fp);
+				if(byte==101||byte==69){ // E/e - very primitive, I know, but works with some exploits	
+					fread(&byte,sizeof(byte),1,fp);
+					if(byte==120||byte==88){ // X/x
+						fread(&byte,sizeof(byte),1,fp);
+						if(byte==101||byte==69){ // E/e
+							exeFound=1;
+							break; // done. We only need 1 proof.
+						}fseek(fp,-1,SEEK_CUR); // and fall-through
+					}fseek(fp,-1,SEEK_CUR);
+				}fseek(fp,-1,SEEK_CUR);
+			}
+		}
+		if(exeFound){ 
+			colorText("red"," * ");
+			printf("Potentially dangerous PDF file! Executable string found.\n");
+		}
 	}
    	rewind(fp);	
 	return knownFileType; // will be true or false
@@ -450,7 +472,7 @@ unsigned char rot13(unsigned char byte){ /* return the rot13() of the byte */
  * Layout Design Functions:
  */
 void printDataHeader(void){
-	colorText("grey","+--------+--------------------------------------------------+-------------------+\n");
+	colorText("grey","\n+--------+--------------------------------------------------+-------------------+\n");
 	colorText("grey","| ");
 	colorText("yellow","BYTES");
       	colorText("grey","  | ");
