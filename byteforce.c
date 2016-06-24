@@ -186,8 +186,7 @@ int pdfHeader(FILE *fp,int fileLength){
 			}
 		}
 		if(exeFound){ 
-			colorText("red"," * ");
-			printf("Potentially dangerous PDF file! Executable string found.\n");
+			colorText("red"," * Potentially dangerous PDF file! Executable string found.\n");
 		}
 	}
    	rewind(fp);	
