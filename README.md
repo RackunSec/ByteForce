@@ -17,6 +17,12 @@ The XOR brute force attack will try every byte from 0x01 to 0x1f as a XOR key ag
 This will perform a simple ROT13() function that I made on the byte before checking it's value for the "[Hh][tT]{2}[pP]" ASCII values that I searched for in the XOR segment above.
 ### XOR-ROT13 Attack
 This will perform the brute-force XOR attack after performing the ROT13() function I made on the file's byte before checking it for the "[Hh][tT]{2}[pP]" ASCII values.
+### PDF Documents
+ByteForce has the ability to check the document for a valid PDF header and also to search for plain-text case-insensitive executable file names. This does not deflate/inflate data streams. This is a simple string check on the file.
+
+_Screenshot: ByteForce showing a potentially dangerous PDF file_
+
+<img src="https://weaknetlabs.com/images/bf-06.png"/>
 ## Screenshots
 _Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
 
@@ -38,6 +44,8 @@ _Screenshot: Compiling ByteForce is easy!_
 * Organize the PCAP file output using the RadioTap headers as delimiters
 * Add Base64 decode attempt attack on possible strings
 * ~~PE/MSDOS validation from Headers~~
+* ~~Search PDFs for file header and executable code~~
+* ~~Clean up output for "| head" streaming~~
 * Search documents for hidden executable code
 
 ## References
