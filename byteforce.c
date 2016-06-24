@@ -18,7 +18,7 @@
 #include<string.h>		// strcpy();
 #include<sys/stat.h>		// file stats
 #include<time.h>		// ctime();
-#define BFVERSION "1.6.22" 	// update me
+#define BFVERSION "1.6.24" 	// update me
 unsigned char rot13(unsigned char byte);				// perform a ROT13 on any given byte
 void processFile(char * file,int mode); 				// handle the file
 void usage(void); 							// print how to use the app
@@ -28,7 +28,8 @@ void goodBye(void);							// Thank you!!
 void colorText(char * color,char * string);				// print fancy colors
 void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey);	// walk through bytes and print them
 void byteDecodeSearch(FILE *fp, char * type);				// ROT13, XOR, XOR-ROT13 byte de-obfuscation
-void dosPeHeader(FILE *fp);			// DOS PE header check
+int dosPeHeader(FILE *fp);						// DOS PE header check
+int pdfHeader(FILE *fp,int fileLength);						// PDF header check
 
 int main(int argc,char ** argv){
 	greetings();
@@ -59,26 +60,28 @@ void processFile(char * file,int mode){ /* process each byte in file */
 	colorText("yellow"," * "); printf("Opening file \x1b[37m%s\x1b[0m\n",file);
 	FILE *fp = fopen(file,"r"); // pointer to opened file
 	struct stat fileAttribs; // place our file's attributes here
+	unsigned short knownFileType = 0; // Boolean for known file type
 	if(fp==NULL){ // what happened?
 		fprintf(stderr,"Could not open file %s.\nPlease check the file.\n",file);
 	}else{ // file opened OK:
-		dosPeHeader(fp); // check for DOS/PE headers
 		stat(file,&fileAttribs);
 		colorText("yellow"," * "); printf("File last modified: \x1b[37m%s\x1b[0m",ctime(&fileAttribs.st_mtime));
 		colorText("yellow"," * "); printf("File last accessed: \x1b[37m%s\x1b[0m",ctime(&fileAttribs.st_atime));
 		colorText("yellow"," * "); printf("File \x1b[37m%s\x1b[0m opened successfully.\n",file);
 		unsigned int fileLength = fileAttribs.st_size; // get the file length in bytes
 		colorText("yellow"," * "); printf("File length \x1b[37m%d\x1b[0m bytes.\n\n",fileLength);
+		knownFileType = dosPeHeader(fp); // check for DOS/PE headers
+		if(!knownFileType) knownFileType = pdfHeader(fp,fileLength); // check for PDF headers
 		unsigned int i; // token for looping through each byte
 		unsigned char bytes[17];
-		unsigned char byteCount = '\0'; // How many bytes read
+		long byteCount = 0; // How many bytes read
 		// print the header for the data:
 		if(mode==0){ // just print the file contents.
-			if(fileLength>0) printDataHeader();
-			bytes[17] = '\0'; // terminate it
-			while(fread(&bytes,1,sizeof(bytes)-1,fp)>0){ // for each byte of the file:
-				unsigned char * hex;
-				sprintf(hex,"| %06x | ",byteCount);
+			if(fileLength>0) printDataHeader(); // print the top of the table
+			bytes[17] = '\0'; // terminate string
+			while(fread(&bytes,1,sizeof(bytes)-1,fp)>0){ // read in chunks of 16 bytes
+				unsigned char hex[500];
+				sprintf(hex,"| %06x | ",byteCount); // sprintf self-terminates
 				colorText("grey",hex);
 				for(i=0;i<16;i++){
 					sprintf(hex,"%02x ",bytes[i]);
@@ -95,7 +98,7 @@ void processFile(char * file,int mode){ /* process each byte in file */
 					}
 					if(i==7) printf(" "); // formatted output
 				}
-				colorText("grey"," |\n"); // format output table END
+				colorText("grey"," |\x1b[0m\n"); // TR END, the extra color is to reset for "|head " pipes
 				strncpy(bytes,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",16); // blow away value
 				byteCount+=16; // update left column
 			}
@@ -140,7 +143,37 @@ void processFile(char * file,int mode){ /* process each byte in file */
 	return;
 }
 
-void dosPeHeader(FILE *fp){ // check the first few bytes for 4D,59,90 and the 60th byte for the PE
+int pdfHeader(FILE *fp,int fileLength){
+	colorText("yellow"," * ");
+	printf("Checking for PDF file header.\n");
+	unsigned short knownFileType = 0;
+	struct pdfHead { // structure for PDF Header bytes
+		unsigned char init[5];    // %PDF-
+		unsigned char spec[4]; // x.x
+	};
+	struct pdfHead pdfHeadBytes;
+	rewind(fp); // back to the beginning
+	fread(&pdfHeadBytes,sizeof(pdfHeadBytes),1,fp);
+	if(strncmp("%PDF-",pdfHeadBytes.init,5)==0){
+		knownFileType = 1;
+		colorText("yellow", " * ");
+		printf("A valid PDF file header, specification: ");
+		pdfHeadBytes.spec[3] = '\0'; // terminate for printf
+		colorText("white",pdfHeadBytes.spec);
+		printf("\n");
+	}
+	if(knownFileType){ // search byte by byte for executable code:
+		unsigned int i;
+		unsigned char byte = '\0'; // place the byte temporarily
+		rewind(fp);
+		// tried using zlib.h deflate/inflate here. no thanks.
+	}
+   	rewind(fp);	
+	return knownFileType; // will be true or false
+}
+
+
+int dosPeHeader(FILE *fp){ // check the first few bytes for 4D,59,90 and the 60th byte for the PE
 	unsigned char byte = '\0';   // store the byte for fread() temporarily
 	unsigned short dosHeader=0;  // is there a DOS header?
 	unsigned short peHeaderOk=0; // is this a valid PE file?
@@ -222,7 +255,7 @@ void dosPeHeader(FILE *fp){ // check the first few bytes for 4D,59,90 and the 60
 		}
 	}
 	rewind(fp);
-	return;
+	return dosHeader; // will be true or false
 }
 
 void byteDecodeSearch(FILE *fp, char * type){ /* XOR *then* ROT13 bytes in search for case-insensitive http strings */
@@ -445,7 +478,7 @@ void colorText(char * color,char * string){ /* print fancy colors: */
 	if(strcmp("yellow",color)==0){ // yellow
 		printf("\x1b[33m");
 	}else if(strcmp("white",color)==0){ // white
-		printf("\x1b[31m"); 
+		printf("\e[97m"); 
 	}else if(strcmp("grey",color)==0){
 		printf("\e[90m");
 	}else if(strcmp("orange",color)==0){
