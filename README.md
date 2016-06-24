@@ -20,7 +20,7 @@ This will perform the brute-force XOR attack after performing the ROT13() functi
 ### PDF Documents
 ByteForce has the ability to check the document for a valid PDF header and also to search for plain-text case-insensitive executable file names. This does not deflate/inflate data streams. This is a simple string check on the file.
 
-_Screenshot: ByteForce showing a potentially dangerous PDF file_
+_Screenshot: ByteForce showing a potentially dangerous PDF file made using Metasploit_
 
 <img src="https://weaknetlabs.com/images/bf-07.png"/>
 ## Screenshots
