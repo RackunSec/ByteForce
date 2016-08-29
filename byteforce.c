@@ -431,7 +431,7 @@ void byteDecodeSearch(FILE *fp, char * type){ /* XOR *then* ROT13 bytes in searc
 void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey){
 	// type 0 == plain-text, 1 == rot13, 2 == xor, 3 == rot13-xor
 	unsigned char byte = '\0';
-	unsigned char * fmt;
+	unsigned char fmt[500]; // is 500 bytes good enough?
 	fread(&byte,sizeof(byte),1,fp); // this will be h
 	if(type==1){ // ROT 13
 		byte = rot13(byte); 
@@ -454,6 +454,7 @@ void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey){
 			byte = byte^xorKey;
 		}
 	}
+	sprintf(fmt,'\0'); // terminate the fmt string
 	printf("\e[0m\n");
 	return; // file place will be kept since fp is a pointer ;)
 }
