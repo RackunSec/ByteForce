@@ -1,5 +1,5 @@
 /*
- * ByteForce ver-> yy.mm.dd.type
+ * ByteForce ver-> yy.mm.dd
  *
  * Douglas Berdeaux
  * WeakNetLabs@gmail.com
@@ -21,10 +21,9 @@
 #include<string.h>		// strcpy();
 #include<sys/stat.h>		// file stats
 #include<time.h>		// ctime();
-#define BFVERSION "1.9.01.min" 	// update me
+#define BFVERSION "1.6.24" 	// update me
 unsigned char rot13(unsigned char byte);				// perform a ROT13 on any given byte
 void processFile(char * file,int mode); 				// handle the file
-void colorText(char * color,char * string);				// print fancy colors
 void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey);	// walk through bytes and print them
 void byteDecodeSearch(FILE *fp, char * type);				// ROT13, XOR, XOR-ROT13 byte de-obfuscation
 int dosPeHeader(FILE *fp);						// DOS PE header check
@@ -405,7 +404,6 @@ void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey){
 	}
 	while(byte>32&&byte<127){ 
 		sprintf(fmt + strlen(fmt),"%c",byte); // breaks
-		//colorText("red",fmt);
 		fread(&byte,sizeof(byte),1,fp);
 		if(type==1){ // ROT 13
 			byte = rot13(byte); 
@@ -431,23 +429,4 @@ unsigned char rot13(unsigned char byte){ /* return the rot13() of the byte */
 		byte-=13;
 	} // otherwise byte is left alone and returned:
 	return byte;
-}
-
-void colorText(char * color,char * string){ /* print fancy colors: */
-	if(strcmp("yellow",color)==0){ // yellow
-		printf("\x1b[33m");
-	}else if(strcmp("white",color)==0){ // white
-		printf("\e[97m"); 
-	}else if(strcmp("grey",color)==0){
-		printf("\e[90m");
-	}else if(strcmp("orange",color)==0){
-		printf("\e[38;5;130m");
-	}else if((strcmp("light grey",color)==0)){
-		printf("\e[38;5;245m");
-	}else if(strcmp("red",color)==0){
-		printf("\e[38;5;196m");
-	}
-	printf("%s",string);
-	printf("\x1b[0m"); // reset color
-	return; // this function gets rid of a lot of strange strings in the code
 }
