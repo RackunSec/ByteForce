@@ -117,7 +117,7 @@ int pdfHeader(FILE *fp,int fileLength){
 				if(byte==120||byte==88){ // X/x
 					fread(&byte,sizeof(byte),1,fp);
 					if(byte==101||byte==69){ // E/e
-						printf("Executable code was found.\n");
+						printf("Plain-text executable code was found.\n");
 						exit(1337); // gtfo
 					}fseek(fp,-1,SEEK_CUR); // and fall-through
 				}fseek(fp,-1,SEEK_CUR);
