@@ -1,5 +1,5 @@
 /*
- * ByteForce ver-> yy.mm.dd
+ * ByteForce ver-> yy.mm.dd.type
  *
  * Douglas Berdeaux
  * WeakNetLabs@gmail.com
@@ -21,7 +21,7 @@
 #include<string.h>		// strcpy();
 #include<sys/stat.h>		// file stats
 #include<time.h>		// ctime();
-#define BFVERSION "1.6.24" 	// update me
+#define BFVERSION "1.9.01.min" 	// update me
 unsigned char rot13(unsigned char byte);				// perform a ROT13 on any given byte
 void processFile(char * file,int mode); 				// handle the file
 void colorText(char * color,char * string);				// print fancy colors
@@ -56,27 +56,7 @@ void processFile(char * file,int mode){ /* process each byte in file */
 		unsigned char bytes[17];
 		long byteCount = 0; // How many bytes read
 		// print the header for the data:
-		if(mode==0){ // just print the file contents.
-			bytes[17] = '\0'; // terminate string
-			while(fread(&bytes,1,sizeof(bytes)-1,fp)>0){ // read in chunks of 16 bytes
-				unsigned char hex[500];
-				sprintf(hex,"| %06x | ",byteCount); // sprintf self-terminates
-				for(i=0;i<16;i++){
-					sprintf(hex,"%02x ",bytes[i]);
-					if(i==7) printf(" "); // formatted output
-				}
-				for(i=0;i<16;i++){
-					if(bytes[i]>=33&&bytes[i]<127){ // printable char:
-						sprintf(hex,"%c",bytes[i]);
-					}else{ // unprintable char:
-						printf(".");
-					}
-					if(i==7) printf(" "); // formatted output
-				}
-				strncpy(bytes,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",16); // blow away value
-				byteCount+=16; // update left column
-			}
-		}else if(mode==1){
+		if(mode==1){
 			unsigned char byte = '\0';
 			unsigned short int httpStringFound = 0; // boolean
 			while(fread(&byte,sizeof(byte),1,fp)>0){ // for each byte of the file:
@@ -125,31 +105,27 @@ int pdfHeader(FILE *fp,int fileLength){
 		knownFileType = 1;
 		pdfHeadBytes.spec[3] = '\0'; // terminate for printf
 	}
-	if(knownFileType){ // search byte by byte for executable code:
-		unsigned int i;
-		unsigned short exeFound = 0;
-		unsigned char byte = '\0'; // place the byte temporarily
-		rewind(fp);
-		// tried using zlib.h deflate/inflate here
-		// after looking at code examples, docs, no thanks.
-		for(i=0;i<fileLength;i++){
+	// Do this anyways, every time
+	unsigned int i;
+	unsigned char byte = '\0'; // place the byte temporarily
+	rewind(fp);
+	for(i=0;i<fileLength;i++){
+		fread(&byte,sizeof(byte),1,fp);
+		if(byte==46){  // period
 			fread(&byte,sizeof(byte),1,fp);
-			if(byte==46){ // .
+			if(byte==101||byte==69){ // E/e - very primitive, I know, but works with some exploits	
 				fread(&byte,sizeof(byte),1,fp);
-				if(byte==101||byte==69){ // E/e - very primitive, I know, but works with some exploits	
+				if(byte==120||byte==88){ // X/x
 					fread(&byte,sizeof(byte),1,fp);
-					if(byte==120||byte==88){ // X/x
-						fread(&byte,sizeof(byte),1,fp);
-						if(byte==101||byte==69){ // E/e
-							exeFound=1;
-							break; // done. We only need 1 proof.
-						}fseek(fp,-1,SEEK_CUR); // and fall-through
-					}fseek(fp,-1,SEEK_CUR);
+					if(byte==101||byte==69){ // E/e
+						printf("Executable code was found.\n");
+						exit(1337); // gtfo
+					}fseek(fp,-1,SEEK_CUR); // and fall-through
 				}fseek(fp,-1,SEEK_CUR);
-			}
+			}fseek(fp,-1,SEEK_CUR);
 		}
 	}
-   	rewind(fp);	
+  rewind(fp);	// no exe found, rewind back to beginning of the file
 	return knownFileType; // will be true or false
 }
 
@@ -252,6 +228,7 @@ void byteDecodeSearch(FILE *fp, char * type){ /* XOR *then* ROT13 bytes in searc
 			unsigned char xor = '\x01'; // start at 1 GOTO 1f
 			unsigned char xorResult = '\x00'; // to hold the result of XOR
 			char xorString[1]; // for each byte we will make a new key
+			// First we will check for HTTP, then EXE afterwards
 			while(xor<32){ 
 				xorResult = xor^byte;
 				if(xorResult==104||xorResult==72){ // H/h
@@ -285,6 +262,43 @@ void byteDecodeSearch(FILE *fp, char * type){ /* XOR *then* ROT13 bytes in searc
 			xor = '\x01'; // reset it
 			byteCount++;  // try the next byte in the file
 		}
+		// NOW WE CHECK FOR .EXE, case insensitive:
+		rewind(fp); // go back to the beginning of the file.
+		while(fread(&byte,sizeof(byte),1,fp)>0){ // for each byte of the file:
+			unsigned char xor = '\x01'; // start at 1 GOTO 1f
+			unsigned char xorResult = '\x00'; // to hold the result of XOR
+			char xorString[1]; // for each byte we will make a new key
+			// First we will check for HTTP, then EXE afterwards
+			while(xor<32){ 
+				xorResult = xor^byte;
+				if(xorResult==46){ // .
+					fread(&byte,sizeof(byte),1,fp); // grab the next byte
+					xorResult = xor^byte;
+					if(xorResult==101||xorResult==69){ // E/e
+						fread(&byte,sizeof(byte),1,fp); // grab the next byte
+						xorResult = xor^byte;
+						if(xorResult==120||xorResult==88){ // X/x
+							fread(&byte,sizeof(byte),1,fp); // grab the next byte
+							xorResult = xor^byte;
+							if(xorResult==101||xorResult==69){ // E/e again (man, the Last Blade 2 was such a good game... )
+								// we have an HTTP string!
+								printf("XORed executable string found.\n");
+								exit(1337);
+								fseek(fp,-1,SEEK_CUR); // rewind a byte
+							}
+							fseek(fp,-1,SEEK_CUR); // rewind a byte
+						}
+						fseek(fp,-1,SEEK_CUR); // rewind a byte
+					}
+					fseek(fp,-2,SEEK_CUR); // rewind a byte
+					fread(&byte,sizeof(byte),1,fp); // grab the next byte
+				}
+				xor++; // try next XOR byte
+			}
+			xor = '\x01'; // reset it
+			byteCount++;  // try the next byte in the file
+		}
+		byteCount=0; // reset before continuing
 	}else if(ti==3){ // XOR->ROT13
 		// first we unXOR, then we try ROT13
 		while(fread(&byte,sizeof(byte),1,fp)>0){ // for each byte of the file:
@@ -328,6 +342,50 @@ void byteDecodeSearch(FILE *fp, char * type){ /* XOR *then* ROT13 bytes in searc
 			xor = '\x01'; // reset it
 			byteCount++;  // try the next byte in the file
 		}
+
+		// NOW WE TRY ROT13->XOR for '.EXE'
+		byteCount=0; // reset before continuing
+		rewind(fp); // go back to beginning of the file
+		register int i = 0;
+		while(fread(&byte,sizeof(byte),1,fp)>0){ // for each byte of the file:
+			unsigned char xor = '\x01'; // start at 1 GOTO 1f
+			unsigned char xorResult = '\x00'; // to hold the result of XOR
+			unsigned char rot13Result = '\x00'; // to hold the result of XOR
+			char xorString[1]; // for each byte we will make a new key
+			//printf("%d: testing byte: %x\n",i,byte);
+			i++;
+			while(xor<32){ 
+				xorResult = xor^byte; // XOR IT!
+				rot13Result = rot13(xorResult); // ROT13 IT!
+				if(rot13Result==46){ // .
+					fread(&byte,sizeof(byte),1,fp); // grab the next byte
+					xorResult = xor^byte; // XOR IT!
+					rot13Result = rot13(xorResult); // ROT13 IT!
+					if(rot13Result==101||rot13Result==69){ // E/e
+						fread(&byte,sizeof(byte),1,fp); // grab the next byte
+						xorResult = xor^byte; // XOR IT!
+						rot13Result = rot13(xorResult); // ROT13 IT!
+						if(rot13Result==120||rot13Result==88){ // X/x
+							fread(&byte,sizeof(byte),1,fp); // grab the next byte
+							xorResult = xor^byte; // XOR IT!
+							rot13Result = rot13(xorResult); // ROT13 IT!
+							if(rot13Result==101||rot13Result==69){ // E/e
+								// we have an HTTP string!
+								printf("XOR-ROT13 encoded executable code found.\n");
+								exit(1337); // gtfo
+							}
+							fseek(fp,-1,SEEK_CUR); // rewind a byte
+						}
+						fseek(fp,-1,SEEK_CUR); // rewind a byte
+					}
+					fseek(fp,-2,SEEK_CUR); // rewind a byte
+					fread(&byte,sizeof(byte),1,fp); // grab the next byte
+				}
+				xor++; // try next XOR byte
+			}
+			xor = '\x01'; // reset it
+			byteCount++;  // try the next byte in the file
+		}
 	}
 	return;
 }
@@ -359,8 +417,10 @@ void getHttpString(FILE *fp,unsigned int type,unsigned char xorKey){
 		}
 	}
 	sprintf(fmt + strlen(fmt),'\0');// add a null terminater to the fmt string
-	printf("%s\n",fmt);
+	printf("URL Found: %s\n",fmt);
 	fmt[0] = '\0'; // terminate string
+	// there is no need to continue from here, we can just exit.
+	exit(1337); // for security reasons and resource mgmt
 	return; // file place will be kept since fp is a pointer ;)
 }
 
