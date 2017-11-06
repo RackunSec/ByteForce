@@ -23,6 +23,7 @@ ByteForce has the ability to check the document for a valid PDF header and also 
 _Screenshot: ByteForce showing a potentially dangerous PDF file made using Metasploit_
 
 <img src="https://weaknetlabs.com/images/bf-07.png"/>
+
 ## Screenshots
 _Screenshot: ByteForce reading a binary file for plain-text HTTP strings, ROT13() HTTP strings and XOR->ROT13() strings_
 
@@ -35,11 +36,13 @@ _Screenshot: ByteForce reading a PNG file_
 _Screenshot: ByteForce reading a 802.11 WiFi network PCAP file_
 
 <img src="https://weaknetlabs.com/images/bf-04.png"/>
+
 ## Compiling
 To compile ByteForce, simply type ```make``` at the command line. I used no special resources or libraries but a few of the default header files from GNU C.
 _Screenshot: Compiling ByteForce is easy!_
 
 <img src="https://weaknetlabs.com/images/bf-05.png"/>
+
 ## TODO
 * Organize the PCAP file output using the RadioTap headers as delimiters
 * Add Base64 decode attempt attack on possible strings
